@@ -3,16 +3,14 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: github-codepipeline
 
 Parameters:
-
-
   GitHubOwner:
     Type: String
-    Default: shrestha-ajay #replace with your github username
+    Default: jakovi01
     AllowedPattern: "[A-Za-z0-9-]+"
 
   RepositoryName:
     Type: String
-    Default: cloud-basics4 #replace with your github repository name
+    Default: cloud-basics4
     AllowedPattern: "[A-Za-z0-9-]+"
 
   BranchName:
@@ -25,42 +23,39 @@ Parameters:
     Default: codepipeline-github-application2
     AllowedPattern: "[A-Za-z0-9-]+"
 
-
 Resources:
-  
   PipelineArtifactsBucket:
     Type: AWS::S3::Bucket
     Properties:
       VersioningConfiguration:
         Status: Enabled
 
-  AppPipeline: 
+  AppPipeline:
     Type: AWS::CodePipeline::Pipeline
-    Properties: 
+    Properties:
       Name: github-wordpress-pipeline
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactsBucket
-      RoleArn: 
-        !GetAtt CodePipelineRole.Arn
-      Stages: 
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      Stages:
         - Name: Source
-          Actions: 
+          Actions:
             - Name: SourceAction
-              ActionTypeId: 
+              ActionTypeId:
                 Category: Source
                 Owner: ThirdParty
                 Version: 1
                 Provider: GitHub
-              OutputArtifacts: 
+              OutputArtifacts:
                 - Name: AppSourceCode
-              Configuration: 
+              Configuration:
                 Owner: !Ref GitHubOwner
                 Repo: !Ref RepositoryName
                 Branch: !Ref BranchName
-                OAuthToken: '{{resolve:secretsmanager:github-oauth-token:SecretString}}'               
+                OAuthToken: '{{resolve:secretsmanager:github-oauth-token:SecretString}}'
                 PollForSourceChanges: false
-              RunOrder: 1      
+              RunOrder: 1
         - Name: Deploy
           Actions:
             - Name: CloudFormationDeploy
@@ -88,7 +83,6 @@ Resources:
       Filters:
         - JsonPath: "$.ref"
           MatchEquals: !Sub "refs/heads/${BranchName}"
-
       TargetPipeline: !Ref AppPipeline
       TargetAction: SourceAction
       Name: AppPipelineWebhook
@@ -101,20 +95,9 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          Effect: Allow
-          Principal:
-            Service: codepipeline.amazonaws.com
-          Action: sts:AssumeRole
-  
-  CodePipelineRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
           - Effect: Allow
             Principal:
-              Service: 
+              Service:
                 - codepipeline.amazonaws.com
             Action: sts:AssumeRole
       Policies:
@@ -137,20 +120,19 @@ Resources:
                 Resource: "*"
                 Effect: Allow
 
-
-
   CloudformationRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          Effect: Allow
-          Principal:
-            Service: cloudformation.amazonaws.com
-          Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
+
 
 
 
